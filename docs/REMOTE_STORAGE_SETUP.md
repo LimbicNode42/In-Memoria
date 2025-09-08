@@ -57,7 +57,38 @@ docker run -d \
   qdrant/qdrant:latest
 ```
 
-### 3. Environment Variables
+### 3. SSL Certificate Setup (For Self-hosted PostgreSQL)
+
+If your PostgreSQL server requires SSL certificate verification (common with managed services or secure self-hosted setups), you can configure SSL support:
+
+#### Steps:
+1. **Obtain your PostgreSQL SSL certificate** (usually named `server-ca.pem`, `postgres.crt`, or similar)
+2. **Create a certs directory** in your project:
+   ```bash
+   mkdir -p certs
+   cp /path/to/your/postgres.crt certs/
+   ```
+3. **Update your environment variables** to enable SSL with certificate verification:
+   ```bash
+   POSTGRES_SSL_MODE=verify-full
+   POSTGRES_SSL_CERT=/app/postgres.crt
+   POSTGRES_SSL_CERT_PATH=./certs/postgres.crt
+   ```
+4. **Uncomment the certificate volume mount** in your `docker-compose.yml`:
+   ```yaml
+   volumes:
+     - ${POSTGRES_SSL_CERT_PATH:-./certs/postgres.crt}:/app/postgres.crt:ro
+   ```
+
+#### SSL Modes Available:
+- `disable` - No SSL
+- `allow` - Try SSL, fallback to non-SSL
+- `prefer` - Try SSL first, fallback to non-SSL (default)
+- `require` - Require SSL, but don't verify certificate
+- `verify-ca` - Require SSL and verify certificate authority
+- `verify-full` - Require SSL and verify certificate + hostname
+
+### 4. Environment Variables
 
 Create a `.env` file or set environment variables:
 
@@ -74,6 +105,14 @@ POSTGRES_PASSWORD=your-secure-password
 POSTGRES_SSL=true
 POSTGRES_POOL_SIZE=10
 
+# SSL Configuration (for self-hosted PostgreSQL with SSL certificates)
+# SSL Mode: disable, allow, prefer, require, verify-ca, verify-full
+POSTGRES_SSL_MODE=verify-full
+# Path to SSL certificate inside container
+POSTGRES_SSL_CERT=/app/postgres.crt
+# Local path to your certificate file (for Docker volume mounting)
+POSTGRES_SSL_CERT_PATH=./certs/postgres.crt
+
 # Qdrant Configuration
 QDRANT_URL=http://your-qdrant-host:6333
 QDRANT_API_KEY=your-qdrant-api-key  # Optional for self-hosted
@@ -87,7 +126,7 @@ OPENAI_API_KEY=your-openai-api-key
 IN_MEMORIA_STORAGE_MODE=remote
 ```
 
-### 4. Docker Compose for Complete Stack
+### 5. Docker Compose for Complete Stack
 
 ```yaml
 # docker-compose.yml

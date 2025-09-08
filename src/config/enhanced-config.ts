@@ -167,6 +167,8 @@ export class EnhancedConfigManager {
       username: process.env.POSTGRES_USER || 'postgres',
       password: process.env.POSTGRES_PASSWORD,
       ssl: process.env.POSTGRES_SSL === 'true',
+      sslMode: process.env.POSTGRES_SSL_MODE as 'disable' | 'allow' | 'prefer' | 'require' | 'verify-ca' | 'verify-full' || undefined,
+      sslCert: process.env.POSTGRES_SSL_CERT || undefined,
       poolSize: parseInt(process.env.POSTGRES_POOL_SIZE || '10'),
       timeout: parseInt(process.env.POSTGRES_TIMEOUT || '30000')
     };

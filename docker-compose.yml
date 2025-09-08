@@ -11,7 +11,9 @@ services:
       dockerfile: Dockerfile.production
       args:
         NODE_ENV: ${NODE_ENV:-production}
-    container_name: inmemoria-app
+    container_name: inmemoria
+    env_file:
+      - .env
     environment:
       # Environment
       NODE_ENV: ${NODE_ENV:-production}
@@ -23,6 +25,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-inmemoria_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Please set POSTGRES_PASSWORD}
       POSTGRES_SSL: ${POSTGRES_SSL:-"false"}  # Internal network, no SSL needed
+      POSTGRES_SSL_MODE: ${POSTGRES_SSL_MODE:-"prefer"}  # disable, allow, prefer, require, verify-ca, verify-full
+      POSTGRES_SSL_CERT: ${POSTGRES_SSL_CERT:-"/app/postgres.crt"}  # Path to SSL certificate file in container
       POSTGRES_POOL_SIZE: ${POSTGRES_POOL_SIZE:-10}
       
       # Qdrant Configuration
@@ -47,6 +51,8 @@ services:
       - ${WORKSPACE_PATH:?Please set WORKSPACE_PATH}:/workspace:ro
       # Optional: Mount specific project
       - ${PROJECT_PATH:-./example-project}:/project:ro
+      # PostgreSQL SSL certificate (uncomment and configure for verify-full mode)
+      - ${POSTGRES_SSL_CERT_PATH:-./certs/postgres.crt}:/app/postgres.crt:ro
     ports:
       - "${MCP_SERVER_PORT:-3000}:3000"
     networks:

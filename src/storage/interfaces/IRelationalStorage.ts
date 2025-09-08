@@ -59,6 +59,8 @@ export interface RelationalStorageConfig {
   username?: string;
   password?: string;
   ssl?: boolean;
+  sslMode?: 'disable' | 'allow' | 'prefer' | 'require' | 'verify-ca' | 'verify-full';
+  sslCert?: string;
   poolSize?: number;
   timeout?: number;
   // SQLite specific

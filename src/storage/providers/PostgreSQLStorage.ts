@@ -561,7 +561,7 @@ export class PostgreSQLStorage implements IRelationalStorage {
   }
 
   private buildConnectionString(): string {
-    const { host, port, database, username, password, ssl } = this.config;
+    const { host, port, database, username, password, ssl, sslMode, sslCert } = this.config;
     
     if (!host || !database || !username) {
       throw new Error('PostgreSQL connection requires host, database, and username');
@@ -581,8 +581,23 @@ export class PostgreSQLStorage implements IRelationalStorage {
     
     connectionString += `/${database}`;
     
-    if (ssl) {
-      connectionString += '?ssl=true';
+    // Handle SSL configuration
+    const sslParams: string[] = [];
+    
+    if (ssl || sslMode) {
+      if (sslMode) {
+        sslParams.push(`sslmode=${sslMode}`);
+      } else if (ssl) {
+        sslParams.push('ssl=true');
+      }
+      
+      if (sslCert && sslMode === 'verify-full') {
+        sslParams.push(`sslrootcert=${sslCert}`);
+      }
+    }
+    
+    if (sslParams.length > 0) {
+      connectionString += '?' + sslParams.join('&');
     }
     
     return connectionString;
