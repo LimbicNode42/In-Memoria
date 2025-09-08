@@ -1,0 +1,68 @@
+# Production Docker Setup
+# Includes PostgreSQL and Qdrant services
+
+version: '3.8'
+
+services:
+  # In-Memoria Application
+  inmemoria:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+      args:
+        NODE_ENV: ${NODE_ENV:-production}
+    container_name: inmemoria-app
+    environment:
+      # Environment
+      NODE_ENV: ${NODE_ENV:-production}
+
+      # PostgreSQL Configuration
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:-in_memoria}
+      POSTGRES_USER: ${POSTGRES_USER:-inmemoria_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Please set POSTGRES_PASSWORD}
+      POSTGRES_SSL: ${POSTGRES_SSL:-"false"}  # Internal network, no SSL needed
+      POSTGRES_POOL_SIZE: ${POSTGRES_POOL_SIZE:-10}
+      
+      # Qdrant Configuration
+      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
+      QDRANT_COLLECTION: ${QDRANT_COLLECTION:-in-memoria}
+      QDRANT_VECTOR_SIZE: ${QDRANT_VECTOR_SIZE:-1536}
+      QDRANT_DISTANCE: ${QDRANT_DISTANCE:-cosine}
+      
+      # OpenAI Configuration
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?Please set OPENAI_API_KEY}
+      
+      # In-Memoria Configuration
+      IN_MEMORIA_STORAGE_MODE: ${IN_MEMORIA_STORAGE_MODE:-remote}
+      IN_MEMORIA_LOG_LEVEL: ${LOG_LEVEL:-info}
+      IN_MEMORIA_ENABLE_PERFORMANCE_LOGGING: ${ENABLE_PERFORMANCE_LOGGING:-false}
+      
+      # MCP Server Configuration
+      MCP_SERVER_PORT: ${MCP_SERVER_PORT:-3000}
+      
+    volumes:
+      # Mount your codebase here
+      - ${WORKSPACE_PATH:?Please set WORKSPACE_PATH}:/workspace:ro
+      # Optional: Mount specific project
+      - ${PROJECT_PATH:-./example-project}:/project:ro
+    ports:
+      - "${MCP_SERVER_PORT:-3000}:3000"
+    networks:
+      - inmemoria
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  inmemoria:
+    driver: bridge

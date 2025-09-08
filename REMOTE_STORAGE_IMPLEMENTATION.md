@@ -29,7 +29,7 @@ The new architecture supports three deployment modes:
 - `dev-environment-setup.ts` - Automated setup tool for local Qdrant binary when Docker isn't available
 
 #### Docker & Deployment
-- `docker-compose.production.yml` - Production setup with PostgreSQL, Qdrant, Redis, and Nginx
+- `docker-compose.production.yml` - Production setup with PostgreSQL, Qdrant, and Nginx
 - `docker-compose.dev.yml` - Development setup with optional external services
 - `Dockerfile.production` - Multi-stage production Docker build
 - `env.production.example` - Complete environment variable template
