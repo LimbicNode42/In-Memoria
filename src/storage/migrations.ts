@@ -14,10 +14,10 @@ export interface Migration {
 }
 
 export class DatabaseMigrator {
-  private db: Database.Database;
+  private db: Database;
   private migrations: Migration[] = [];
 
-  constructor(db: Database.Database) {
+  constructor(db: Database) {
     this.db = db;
     this.initializeMigrationsTable();
     this.loadMigrations();

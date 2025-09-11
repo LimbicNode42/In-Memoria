@@ -35,8 +35,8 @@ services:
       QDRANT_VECTOR_SIZE: ${QDRANT_VECTOR_SIZE:-1536}
       QDRANT_DISTANCE: ${QDRANT_DISTANCE:-cosine}
       
-      # OpenAI Configuration
-      OPENAI_API_KEY: ${OPENAI_API_KEY:?Please set OPENAI_API_KEY}
+      # OpenAI Configuration (optional - only needed for OpenAI embeddings)
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-""}  # Optional - system will use local embeddings if not provided
       
       # In-Memoria Configuration
       IN_MEMORIA_STORAGE_MODE: ${IN_MEMORIA_STORAGE_MODE:-remote}

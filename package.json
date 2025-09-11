@@ -15,8 +15,10 @@
   ],
   "scripts": {
     "build": "tsc && npm run build:rust && npm run copy-assets",
+    "build:prod": "tsc --project tsconfig.production.json && npm run build:rust:optional && npm run copy-assets",
     "copy-assets": "node -e \"require('fs').mkdirSync('dist/storage', {recursive: true}); require('fs').copyFileSync('src/storage/schema.sql', 'dist/storage/schema.sql')\"",
     "build:rust": "npm --prefix rust-core run build",
+    "build:rust:optional": "npm run build:rust || echo 'Warning: Rust build failed, continuing without native bindings'",
     "build:universal": "npm run build:rust -- --target universal",
     "build:windows": "npm --prefix rust-core run build -- --target x86_64-pc-windows-msvc",
     "build:macos": "npm --prefix rust-core run build -- --target x86_64-apple-darwin",

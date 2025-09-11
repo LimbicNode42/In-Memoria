@@ -17,6 +17,7 @@ interface PgClient {
   connect(): Promise<void>;
   end(): Promise<void>;
   query(text: string, params?: any[]): Promise<any>;
+  release(): void;
 }
 
 interface PgPool {
@@ -37,7 +38,10 @@ export class PostgreSQLStorage implements IRelationalStorage {
   async initialize(): Promise<void> {
     try {
       // Dynamic import to avoid dependency issues
-      const { Pool } = await import('pg');
+      const pg = await import('pg').catch(() => {
+        throw new Error('PostgreSQL package (pg) is required but not installed. Run: npm install pg');
+      });
+      const { Pool } = pg as any;
       
       const poolConfig = {
         connectionString: this.config.connectionString || this.buildConnectionString(),
@@ -49,7 +53,7 @@ export class PostgreSQLStorage implements IRelationalStorage {
       this.pool = new Pool(poolConfig);
       
       // Test connection
-      const client = await this.pool.connect();
+      const client = await this.pool!.connect();
       await client.query('SELECT NOW()');
       client.release();
 

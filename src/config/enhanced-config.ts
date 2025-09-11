@@ -2,9 +2,9 @@
  * Enhanced configuration system supporting remote storage
  */
 
-import { RelationalStorageConfig } from '../interfaces/IRelationalStorage.js';
-import { VectorStorageConfig } from '../interfaces/IVectorStorage.js';
-import { StorageProviderConfig } from '../interfaces/IStorageProvider.js';
+import { RelationalStorageConfig } from '../storage/interfaces/IRelationalStorage.js';
+import { VectorStorageConfig } from '../storage/interfaces/IVectorStorage.js';
+import { StorageProviderConfig } from '../storage/interfaces/IStorageProvider.js';
 
 export interface InMemoriaConfig {
   // Storage configuration

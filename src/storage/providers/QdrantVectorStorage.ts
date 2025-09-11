@@ -14,6 +14,10 @@ import {
 } from '../interfaces/IVectorStorage.js';
 import { CircuitBreaker, createOpenAICircuitBreaker } from '../../utils/circuit-breaker.js';
 
+// Type definitions for dynamically imported modules
+type OpenAI = any;
+type Pipeline = any;
+
 interface QdrantPoint {
   id: string | number;
   vector: number[];
@@ -70,19 +74,25 @@ export class QdrantVectorStorage implements IVectorStorage {
 
     // Initialize OpenAI circuit breaker
     this.openaiCircuitBreaker = createOpenAICircuitBreaker();
+  }
 
+  private async initializeOpenAI(): Promise<void> {
     // Initialize OpenAI client if API key is provided
     if (process.env.OPENAI_API_KEY) {
-      this.openaiClient = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY
-      });
+      try {
+        const OpenAI = (await import('openai')).default;
+        this.openaiClient = new OpenAI({
+          apiKey: process.env.OPENAI_API_KEY
+        });
+      } catch (error) {
+        console.warn('Failed to import OpenAI, using local embeddings only');
+      }
     }
-
-    this.initializeLocalEmbeddings();
   }
 
   private async initializeLocalEmbeddings(): Promise<void> {
     try {
+      const { pipeline } = await import('@xenova/transformers') as any;
       this.localEmbeddingPipeline = await pipeline(
         'feature-extraction',
         'Xenova/all-MiniLM-L6-v2'
@@ -96,6 +106,10 @@ export class QdrantVectorStorage implements IVectorStorage {
 
   async initialize(): Promise<void> {
     try {
+      // Initialize OpenAI and local embeddings
+      await this.initializeOpenAI();
+      await this.initializeLocalEmbeddings();
+
       // Check if Qdrant is accessible
       const response = await this.makeRequest('GET', '/');
       if (!response.ok) {
@@ -170,7 +184,9 @@ export class QdrantVectorStorage implements IVectorStorage {
       // Cache the result
       if (this.embeddingCache.size >= this.EMBEDDING_CACHE_SIZE) {
         const firstKey = this.embeddingCache.keys().next().value;
-        this.embeddingCache.delete(firstKey);
+        if (firstKey) {
+          this.embeddingCache.delete(firstKey);
+        }
       }
       this.embeddingCache.set(text, embedding);
 

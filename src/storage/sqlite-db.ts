@@ -55,7 +55,7 @@ export interface AIInsight {
 }
 
 export class SQLiteDatabase {
-  private db: Database.Database;
+  private db: Database;
   private migrator: DatabaseMigrator;
 
   constructor(dbPath: string = ':memory:') {

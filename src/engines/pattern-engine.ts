@@ -1,4 +1,4 @@
-import { PatternLearner } from '../rust-bindings.js';
+import { PatternLearner, PatternLearnerType } from '../rust-bindings.js';
 import { SQLiteDatabase, DeveloperPattern } from '../storage/sqlite-db.js';
 import { FileChange } from '../watchers/file-watcher.js';
 import { nanoid } from 'nanoid';
@@ -33,7 +33,7 @@ export interface RelevantPattern {
 }
 
 export class PatternEngine {
-  private rustLearner: InstanceType<typeof PatternLearner>;
+  private rustLearner: any; // Use any to handle both native and fallback implementations
 
   constructor(private database: SQLiteDatabase) {
     this.rustLearner = new PatternLearner();

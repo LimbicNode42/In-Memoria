@@ -1,4 +1,4 @@
-import { SemanticAnalyzer } from '../rust-bindings.js';
+import { SemanticAnalyzer, SemanticAnalyzerType } from '../rust-bindings.js';
 import { SQLiteDatabase, SemanticConcept } from '../storage/sqlite-db.js';
 import { SemanticVectorDB } from '../storage/vector-db.js';
 import { nanoid } from 'nanoid';
@@ -33,7 +33,7 @@ export interface FileAnalysisResult {
 }
 
 export class SemanticEngine {
-  private rustAnalyzer: InstanceType<typeof SemanticAnalyzer> | null = null;
+  private rustAnalyzer: any = null; // Use any to handle both native and fallback implementations
   private rustCircuitBreaker: CircuitBreaker;
   private initializationPromise: Promise<void> | null = null;
   private cleanupInterval: NodeJS.Timeout | null = null;

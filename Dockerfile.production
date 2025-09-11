@@ -1,24 +1,32 @@
 # Multi-stage production Dockerfile
 FROM node:18-alpine AS builder
 
-# Install build dependencies
-RUN apk add --no-cache python3 make g++ git
+# Install build dependencies including Rust
+RUN apk add --no-cache python3 make g++ git curl
+
+# Install Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
 
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 COPY tsconfig.json ./
+COPY tsconfig.production.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (needed for build)
+RUN npm ci
 
 # Copy source code
 COPY src/ ./src/
 COPY rust-core/ ./rust-core/
 
-# Build the application
-RUN npm run build
+# Build the application (excluding test files)
+RUN npm run build:prod
+
+# Remove dev dependencies after build
+RUN npm prune --production
 
 # Production stage
 FROM node:18-alpine AS production
