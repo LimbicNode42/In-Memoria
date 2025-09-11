@@ -53,6 +53,8 @@ services:
       - ${PROJECT_PATH:-./example-project}:/project:ro
       # PostgreSQL SSL certificate (uncomment and configure for verify-full mode)
       - ${POSTGRES_SSL_CERT_PATH:-./certs/postgres.crt}:/app/postgres.crt:ro
+      # Persistent data volume for local SQLite database
+      - inmemoria_data:/app/data
     ports:
       - "${MCP_SERVER_PORT:-3000}:3000"
     networks:
@@ -67,6 +69,8 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  inmemoria_data:
     driver: local
 
 networks:

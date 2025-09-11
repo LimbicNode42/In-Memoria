@@ -276,7 +276,7 @@ export class SemanticEngine {
       if (analysisData.change && analysisData.impact.affectedConcepts) {
         for (const conceptName of analysisData.impact.affectedConcepts) {
           const existingConcepts = this.database.getSemanticConcepts();
-          const concept = existingConcepts.find(c => c.conceptName === conceptName);
+          const concept = existingConcepts.find((c: SemanticConcept) => c.conceptName === conceptName);
 
           if (concept) {
             // Update concept's evolution history

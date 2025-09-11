@@ -392,11 +392,11 @@ export class PatternEngine {
     }
 
     const mostUsed = allPatterns
-      .sort((a, b) => b.frequency - a.frequency)
+      .sort((a: DeveloperPattern, b: DeveloperPattern) => b.frequency - a.frequency)
       .slice(0, 10);
 
     const recentlyUsed = allPatterns
-      .sort((a, b) => b.lastSeen.getTime() - a.lastSeen.getTime())
+      .sort((a: DeveloperPattern, b: DeveloperPattern) => b.lastSeen.getTime() - a.lastSeen.getTime())
       .slice(0, 10);
 
     return {

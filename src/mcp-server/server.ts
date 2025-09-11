@@ -14,6 +14,7 @@ import { MonitoringTools } from './tools/monitoring-tools.js';
 import { SemanticEngine } from '../engines/semantic-engine.js';
 import { PatternEngine } from '../engines/pattern-engine.js';
 import { SQLiteDatabase } from '../storage/sqlite-db.js';
+import { createRelationalStorage, getRelationalConfigFromEnv } from '../storage/relational-storage-factory.js';
 import { createVectorStorage, getStorageConfigFromEnv } from '../storage/storage-factory.js';
 import { IVectorStorage } from '../storage/interfaces/IVectorStorage.js';
 import { validateInput, VALIDATION_SCHEMAS } from './validation.js';
@@ -51,16 +52,26 @@ export class CodeCartographerMCP {
       console.error('Initializing In Memoria components...');
 
       // Initialize storage using configuration management
-      // Database path is determined by config based on the analyzed project
-      const appConfig = config.getConfig();
-      const dbPath = config.getDatabasePath(); // Will use current directory as project path
-      console.error(`Attempting to initialize database at: ${dbPath}`);
-
+      // Initialize relational storage (prefer PostgreSQL if available, fallback to SQLite)
       try {
+        const relationalConfig = getRelationalConfigFromEnv();
+        
+        if (relationalConfig.storageProvider === 'postgresql') {
+          console.error('PostgreSQL configuration detected, but SQLite will be used for compatibility');
+          console.error('Full PostgreSQL support will be available in a future update');
+        }
+        
+        // For now, always use SQLite but in a persistent location when PostgreSQL would be used
+        const dbPath = relationalConfig.storageProvider === 'postgresql' 
+          ? '/app/data/in-memoria.db'  // Persistent path for production
+          : config.getDatabasePath(); // Standard config path for development
+          
+        console.error(`Attempting to initialize SQLite database at: ${dbPath}`);
+        
         this.database = new SQLiteDatabase(dbPath);
-        console.error('SQLite database initialized successfully');
+        console.error('Relational database initialized successfully');
       } catch (dbError: unknown) {
-        console.error('Failed to initialize SQLite database:', dbError);
+        console.error('Failed to initialize relational database:', dbError);
         console.error('The MCP server will continue with limited functionality');
         throw new Error(`Database initialization failed: ${dbError instanceof Error ? dbError.message : String(dbError)}`);
       }

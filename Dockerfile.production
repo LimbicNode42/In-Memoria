@@ -46,8 +46,8 @@ COPY --from=builder --chown=inmemoria:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=inmemoria:nodejs /app/package*.json ./
 
 # Create necessary directories
-RUN mkdir -p /workspace /project && \
-    chown -R inmemoria:nodejs /workspace /project
+RUN mkdir -p /workspace /project /app/data && \
+    chown -R inmemoria:nodejs /workspace /project /app/data
 
 # Switch to non-root user
 USER inmemoria
