@@ -12,7 +12,8 @@ import {
 import { SemanticEngine } from '../../engines/semantic-engine.js';
 import { PatternEngine } from '../../engines/pattern-engine.js';
 import { SQLiteDatabase } from '../../storage/sqlite-db.js';
-import { SemanticVectorDB } from '../../storage/vector-db.js';
+import { IVectorStorage } from '../../storage/interfaces/IVectorStorage.js';
+import { createVectorStorage, getStorageConfigFromEnv } from '../../storage/storage-factory.js';
 import { config } from '../../config/config.js';
 
 export class IntelligenceTools {
@@ -20,7 +21,7 @@ export class IntelligenceTools {
     private semanticEngine: SemanticEngine,
     private patternEngine: PatternEngine,
     private database: SQLiteDatabase,
-    private vectorDB?: SemanticVectorDB // Receive vectorDB instance from server
+    private vectorDB?: IVectorStorage // Receive vectorDB instance from server
   ) {}
 
   get tools(): Tool[] {
@@ -168,7 +169,7 @@ export class IntelligenceTools {
   }> {
     const startTime = Date.now();
     let projectDatabase: SQLiteDatabase | null = null;
-    let projectVectorDB: SemanticVectorDB | null = null;
+    let projectVectorDB: IVectorStorage | null = null;
     let projectSemanticEngine: SemanticEngine | null = null;
     let projectPatternEngine: PatternEngine | null = null;
     
@@ -176,7 +177,8 @@ export class IntelligenceTools {
       // Create project-specific database and engines for learning
       const projectDbPath = config.getDatabasePath(args.path);
       projectDatabase = new SQLiteDatabase(projectDbPath);
-      projectVectorDB = new SemanticVectorDB(process.env.OPENAI_API_KEY);
+      projectVectorDB = await createVectorStorage(getStorageConfigFromEnv());
+      await projectVectorDB.initialize();
       projectSemanticEngine = new SemanticEngine(projectDatabase, projectVectorDB);
       projectPatternEngine = new PatternEngine(projectDatabase);
       
@@ -634,7 +636,7 @@ export class IntelligenceTools {
       }
       
       // Initialize vector DB if not already done
-      await vectorDB.initialize('in-memoria-intelligence');
+      await vectorDB.initialize();
       
       let vectorCount = 0;
       

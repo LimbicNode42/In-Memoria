@@ -1,9 +1,11 @@
-import { Surreal } from 'surrealdb';
-import * as SurrealNodeModule from '@surrealdb/node';
 import { CircuitBreaker, createOpenAICircuitBreaker } from '../utils/circuit-breaker.js';
 import { globalProfiler, PerformanceOptimizer } from '../utils/performance-profiler.js';
 import OpenAI from 'openai';
 import { pipeline } from '@xenova/transformers';
+
+// SurrealDB types for fallback compatibility
+type Surreal = any;
+type SurrealNodeModule = any;
 
 export interface CodeMetadata {
   id: string;
@@ -51,9 +53,19 @@ export class SemanticVectorDB {
   private hasLoggedEmbeddingStart = false;
 
   constructor(apiKey?: string) {
-    this.db = new Surreal({
-      engines: (SurrealNodeModule as any).surrealdbNodeEngines(),
-    });
+    // Try to dynamically import SurrealDB - this will fail on ARM64 platforms
+    try {
+      const { Surreal, surrealdbNodeEngines } = require('@surrealdb/node');
+      this.db = new Surreal({
+        engines: surrealdbNodeEngines(),
+      });
+    } catch (error) {
+      throw new Error(
+        `SurrealDB is not available on this platform. ` +
+        `Error: ${error instanceof Error ? error.message : String(error)}. ` +
+        `Consider using Qdrant vector storage instead by setting VECTOR_PROVIDER=qdrant.`
+      );
+    }
 
     this.apiKey = apiKey || process.env.OPENAI_API_KEY;
     this.openaiCircuitBreaker = createOpenAICircuitBreaker();

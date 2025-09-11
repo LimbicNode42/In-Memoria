@@ -1,6 +1,6 @@
 import { SemanticAnalyzer, SemanticAnalyzerType } from '../rust-bindings.js';
 import { SQLiteDatabase, SemanticConcept } from '../storage/sqlite-db.js';
-import { SemanticVectorDB } from '../storage/vector-db.js';
+import { IVectorStorage } from '../storage/interfaces/IVectorStorage.js';
 import { nanoid } from 'nanoid';
 import { CircuitBreaker, createRustAnalyzerCircuitBreaker } from '../utils/circuit-breaker.js';
 import { globalProfiler, PerformanceOptimizer } from '../utils/performance-profiler.js';
@@ -47,7 +47,7 @@ export class SemanticEngine {
 
   constructor(
     private database: SQLiteDatabase,
-    private vectorDB: SemanticVectorDB
+    private vectorDB: IVectorStorage
   ) {
     this.rustCircuitBreaker = createRustAnalyzerCircuitBreaker();
 
@@ -321,7 +321,7 @@ export class SemanticEngine {
   }>> {
     try {
       await this.vectorDB.initialize();
-      const results = await this.vectorDB.findSimilarCode(query, limit);
+      const results = await this.vectorDB.searchSimilarCode(query, { limit });
 
       return results.map(result => ({
         concept: result.metadata.functionName || result.metadata.className || 'unknown',

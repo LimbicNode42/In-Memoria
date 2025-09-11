@@ -14,14 +14,15 @@ import { MonitoringTools } from './tools/monitoring-tools.js';
 import { SemanticEngine } from '../engines/semantic-engine.js';
 import { PatternEngine } from '../engines/pattern-engine.js';
 import { SQLiteDatabase } from '../storage/sqlite-db.js';
-import { SemanticVectorDB } from '../storage/vector-db.js';
+import { createVectorStorage, getStorageConfigFromEnv } from '../storage/storage-factory.js';
+import { IVectorStorage } from '../storage/interfaces/IVectorStorage.js';
 import { validateInput, VALIDATION_SCHEMAS } from './validation.js';
 import { config } from '../config/config.js';
 
 export class CodeCartographerMCP {
   private server: Server;
   private database!: SQLiteDatabase;
-  private vectorDB!: SemanticVectorDB;
+  private vectorDB!: IVectorStorage;
   private semanticEngine!: SemanticEngine;
   private patternEngine!: PatternEngine;
   private coreTools!: CoreAnalysisTools;
@@ -64,7 +65,8 @@ export class CodeCartographerMCP {
         throw new Error(`Database initialization failed: ${dbError instanceof Error ? dbError.message : String(dbError)}`);
       }
 
-      this.vectorDB = new SemanticVectorDB(process.env.OPENAI_API_KEY);
+      this.vectorDB = await createVectorStorage(getStorageConfigFromEnv());
+      await this.vectorDB.initialize();
       console.error('Vector database initialized');
 
       // Initialize engines

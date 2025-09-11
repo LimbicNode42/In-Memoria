@@ -4,7 +4,8 @@ import { join } from 'path';
 import { SQLiteDatabase } from '../storage/sqlite-db.js';
 import { SemanticEngine } from '../engines/semantic-engine.js';
 import { PatternEngine } from '../engines/pattern-engine.js';
-import { SemanticVectorDB } from '../storage/vector-db.js';
+import { createVectorStorage, getStorageConfigFromEnv } from '../storage/storage-factory.js';
+import { IVectorStorage } from '../storage/interfaces/IVectorStorage.js';
 import { ProgressTracker } from '../utils/progress-tracker.js';
 import { ConsoleProgressRenderer } from '../utils/console-progress.js';
 import { glob } from 'glob';
@@ -205,7 +206,8 @@ export class InteractiveSetup {
     try {
       // Initialize components
       const database = new SQLiteDatabase(join(config.projectPath, 'in-memoria.db'));
-      const vectorDB = new SemanticVectorDB(config.openaiApiKey);
+      const vectorDB = await createVectorStorage(getStorageConfigFromEnv());
+      await vectorDB.initialize();
       const semanticEngine = new SemanticEngine(database, vectorDB);
       const patternEngine = new PatternEngine(database);
 

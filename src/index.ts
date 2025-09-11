@@ -9,7 +9,8 @@ import { ChangeAnalyzer } from './watchers/change-analyzer.js';
 import { SemanticEngine } from './engines/semantic-engine.js';
 import { PatternEngine } from './engines/pattern-engine.js';
 import { SQLiteDatabase } from './storage/sqlite-db.js';
-import { SemanticVectorDB } from './storage/vector-db.js';
+import { createVectorStorage, getStorageConfigFromEnv } from './storage/storage-factory.js';
+import { IVectorStorage } from './storage/interfaces/IVectorStorage.js';
 import { InteractiveSetup } from './cli/interactive-setup.js';
 import { DebugTools } from './cli/debug-tools.js';
 import { config } from './config/config.js';
@@ -108,7 +109,8 @@ async function startWatcher(path: string): Promise<void> {
 
   // Initialize components
   const database = new SQLiteDatabase(config.getDatabasePath(path));
-  const vectorDB = new SemanticVectorDB(process.env.OPENAI_API_KEY);
+  const vectorDB = await createVectorStorage(getStorageConfigFromEnv());
+  await vectorDB.initialize();
   const semanticEngine = new SemanticEngine(database, vectorDB);
   const patternEngine = new PatternEngine(database);
   const analyzer = new ChangeAnalyzer(semanticEngine, patternEngine, database);
@@ -160,7 +162,8 @@ async function learnCodebase(path: string): Promise<void> {
   console.log(`Learning from codebase: ${path}`);
 
   const database = new SQLiteDatabase(config.getDatabasePath(path));
-  const vectorDB = new SemanticVectorDB(process.env.OPENAI_API_KEY);
+  const vectorDB = await createVectorStorage(getStorageConfigFromEnv());
+  await vectorDB.initialize();
   const semanticEngine = new SemanticEngine(database, vectorDB);
   const patternEngine = new PatternEngine(database);
 
@@ -199,7 +202,8 @@ async function analyzeCodebase(path: string): Promise<void> {
   console.log(`Analyzing codebase: ${path}`);
 
   const database = new SQLiteDatabase(config.getDatabasePath(path));
-  const vectorDB = new SemanticVectorDB(process.env.OPENAI_API_KEY);
+  const vectorDB = await createVectorStorage(getStorageConfigFromEnv());
+  await vectorDB.initialize();
   const semanticEngine = new SemanticEngine(database, vectorDB);
   const patternEngine = new PatternEngine(database);
 

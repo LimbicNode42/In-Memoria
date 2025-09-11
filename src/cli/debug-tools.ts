@@ -1,5 +1,6 @@
 import { SQLiteDatabase } from '../storage/sqlite-db.js';
-import { SemanticVectorDB } from '../storage/vector-db.js';
+import { createVectorStorage, getStorageConfigFromEnv } from '../storage/storage-factory.js';
+import { IVectorStorage } from '../storage/interfaces/IVectorStorage.js';
 import { SemanticEngine } from '../engines/semantic-engine.js';
 import { PatternEngine } from '../engines/pattern-engine.js';
 import { existsSync, statSync } from 'fs';
@@ -210,7 +211,8 @@ export class DebugTools {
       }
 
       const database = new SQLiteDatabase(dbPath);
-      const vectorDB = new SemanticVectorDB(process.env.OPENAI_API_KEY);
+      const vectorDB = await createVectorStorage(getStorageConfigFromEnv());
+      await vectorDB.initialize();
       const semanticEngine = new SemanticEngine(database, vectorDB);
       const patternEngine = new PatternEngine(database);
 
