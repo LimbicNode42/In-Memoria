@@ -57,21 +57,20 @@ export class CodeCartographerMCP {
         const relationalConfig = getRelationalConfigFromEnv();
         
         if (relationalConfig.storageProvider === 'postgresql') {
-          console.error('PostgreSQL configuration detected, but SQLite will be used for compatibility');
-          console.error('Full PostgreSQL support will be available in a future update');
+          console.error('🐘 PostgreSQL configuration detected, initializing PostgreSQL storage');
+          const pgStorage = await createRelationalStorage(relationalConfig);
+          await pgStorage.initialize();
+          this.database = pgStorage as any; // Type casting for compatibility
+          console.error('✅ PostgreSQL database initialized successfully');
+        } else {
+          console.error('📁 No PostgreSQL configuration found, using SQLite storage');
+          const dbPath = config.getDatabasePath();
+          console.error(`Attempting to initialize SQLite database at: ${dbPath}`);
+          this.database = new SQLiteDatabase(dbPath);
+          console.error('✅ SQLite database initialized successfully');
         }
-        
-        // For now, always use SQLite but in a persistent location when PostgreSQL would be used
-        const dbPath = relationalConfig.storageProvider === 'postgresql' 
-          ? '/app/data/in-memoria.db'  // Persistent path for production
-          : config.getDatabasePath(); // Standard config path for development
-          
-        console.error(`Attempting to initialize SQLite database at: ${dbPath}`);
-        
-        this.database = new SQLiteDatabase(dbPath);
-        console.error('Relational database initialized successfully');
       } catch (dbError: unknown) {
-        console.error('Failed to initialize relational database:', dbError);
+        console.error('❌ Failed to initialize relational database:', dbError);
         console.error('The MCP server will continue with limited functionality');
         throw new Error(`Database initialization failed: ${dbError instanceof Error ? dbError.message : String(dbError)}`);
       }

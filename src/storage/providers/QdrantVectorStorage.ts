@@ -77,16 +77,21 @@ export class QdrantVectorStorage implements IVectorStorage {
   }
 
   private async initializeOpenAI(): Promise<void> {
-    // Initialize OpenAI client if API key is provided
-    if (process.env.OPENAI_API_KEY) {
+    // Initialize OpenAI client if API key is provided via constructor or environment
+    const openaiApiKey = this.apiKey || process.env.OPENAI_API_KEY;
+    
+    if (openaiApiKey) {
       try {
         const OpenAI = (await import('openai')).default;
         this.openaiClient = new OpenAI({
-          apiKey: process.env.OPENAI_API_KEY
+          apiKey: openaiApiKey
         });
+        console.log('✅ OpenAI client initialized for embeddings');
       } catch (error) {
-        console.warn('Failed to import OpenAI, using local embeddings only');
+        console.warn('⚠️  Failed to import OpenAI, using local embeddings only:', error);
       }
+    } else {
+      console.log('📝 No OpenAI API key provided, will use local embeddings');
     }
   }
 
@@ -101,6 +106,8 @@ export class QdrantVectorStorage implements IVectorStorage {
     } catch (error: unknown) {
       console.warn('⚠️  Failed to initialize local embeddings:', error instanceof Error ? error.message : String(error));
       console.log('📝 Will use fallback local embedding method');
+      // Don't re-throw the error, just continue without local embeddings
+      this.localEmbeddingPipeline = null;
     }
   }
 
@@ -108,7 +115,14 @@ export class QdrantVectorStorage implements IVectorStorage {
     try {
       // Initialize OpenAI and local embeddings
       await this.initializeOpenAI();
-      await this.initializeLocalEmbeddings();
+      
+      // Initialize local embeddings but don't fail if it doesn't work
+      try {
+        await this.initializeLocalEmbeddings();
+      } catch (localEmbeddingError) {
+        console.warn('⚠️  Local embeddings initialization failed, will use fallback:', localEmbeddingError);
+        this.localEmbeddingPipeline = null;
+      }
 
       // Check if Qdrant is accessible
       const response = await this.makeRequest('GET', '/');
@@ -120,7 +134,11 @@ export class QdrantVectorStorage implements IVectorStorage {
       await this.ensureCollection();
       
       this.initialized = true;
-      console.log(`✅ Qdrant vector storage initialized: ${this.baseUrl}/${this.collectionName}`);
+      
+      // Log initialization status
+      const embeddingMethod = this.openaiClient ? 'OpenAI API' : 'Local/Fallback';
+      console.log(`✅ Qdrant vector storage initialized: ${this.baseUrl}/${this.collectionName} (embeddings: ${embeddingMethod})`);
+      
     } catch (error) {
       console.error('Failed to initialize Qdrant:', error);
       throw error;

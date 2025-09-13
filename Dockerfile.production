@@ -31,8 +31,12 @@ RUN npm prune --production
 # Production stage
 FROM node:18-alpine AS production
 
-# Install runtime dependencies
-RUN apk add --no-cache curl
+# Install runtime dependencies including glibc compatibility for ONNX runtime
+RUN apk add --no-cache \
+    curl \
+    gcompat \
+    libstdc++ \
+    && rm -rf /var/cache/apk/*
 
 # Create app user
 RUN addgroup -g 1001 -S nodejs

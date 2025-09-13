@@ -41,7 +41,7 @@ export async function createVectorStorage(config: StorageConfig): Promise<IVecto
       return new QdrantVectorStorage({
         type: 'qdrant',
         url: config.qdrant.url,
-        apiKey: config.qdrant.apiKey,
+        apiKey: openaiApiKey, // Pass OpenAI API key for embeddings
         collectionName: config.qdrant.collectionName || 'code_embeddings',
         embeddingProvider: 'openai',
         embeddingModel: 'text-embedding-3-small'
@@ -62,7 +62,7 @@ export async function createVectorStorage(config: StorageConfig): Promise<IVecto
         return new QdrantVectorStorage({
           type: 'qdrant',
           url: config.qdrant.url,
-          apiKey: config.qdrant.apiKey,
+          apiKey: openaiApiKey, // Pass OpenAI API key for embeddings
           collectionName: config.qdrant.collectionName || 'code_embeddings',
           embeddingProvider: 'openai',
           embeddingModel: 'text-embedding-3-small'
