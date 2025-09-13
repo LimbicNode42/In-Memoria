@@ -97,12 +97,27 @@ export class QdrantVectorStorage implements IVectorStorage {
 
   private async initializeLocalEmbeddings(): Promise<void> {
     try {
-      const { pipeline } = await import('@xenova/transformers') as any;
-      this.localEmbeddingPipeline = await pipeline(
-        'feature-extraction',
-        'Xenova/all-MiniLM-L6-v2'
-      );
-      console.log('✅ Local embedding pipeline ready');
+      console.log('🔄 Starting local embeddings initialization...');
+      
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Local embeddings initialization timed out after 60 seconds')), 60000);
+      });
+      
+      const initPromise = (async () => {
+        console.log('📦 Importing transformers library...');
+        const { pipeline } = await import('@xenova/transformers') as any;
+        
+        console.log('🤖 Loading all-MiniLM-L6-v2 model...');
+        this.localEmbeddingPipeline = await pipeline(
+          'feature-extraction',
+          'Xenova/all-MiniLM-L6-v2'
+        );
+        console.log('✅ Local embedding pipeline ready');
+      })();
+      
+      await Promise.race([initPromise, timeoutPromise]);
+      
     } catch (error: unknown) {
       console.warn('⚠️  Failed to initialize local embeddings:', error instanceof Error ? error.message : String(error));
       console.log('📝 Will use fallback local embedding method');
@@ -113,10 +128,14 @@ export class QdrantVectorStorage implements IVectorStorage {
 
   async initialize(): Promise<void> {
     try {
+      console.log('🔄 Starting Qdrant vector storage initialization...');
+      
       // Initialize OpenAI and local embeddings
+      console.log('🔑 Initializing OpenAI client...');
       await this.initializeOpenAI();
       
       // Initialize local embeddings but don't fail if it doesn't work
+      console.log('🤖 Initializing local embeddings...');
       try {
         await this.initializeLocalEmbeddings();
       } catch (localEmbeddingError) {
@@ -125,13 +144,17 @@ export class QdrantVectorStorage implements IVectorStorage {
       }
 
       // Check if Qdrant is accessible
+      console.log('🔍 Checking Qdrant accessibility...');
       const response = await this.makeRequest('GET', '/');
       if (!response.ok) {
         throw new Error(`Qdrant not accessible: ${response.status} ${response.statusText}`);
       }
+      console.log('✅ Qdrant is accessible');
 
       // Create collection if it doesn't exist
+      console.log('📁 Ensuring collection exists...');
       await this.ensureCollection();
+      console.log('✅ Collection ready');
       
       this.initialized = true;
       
@@ -140,7 +163,7 @@ export class QdrantVectorStorage implements IVectorStorage {
       console.log(`✅ Qdrant vector storage initialized: ${this.baseUrl}/${this.collectionName} (embeddings: ${embeddingMethod})`);
       
     } catch (error) {
-      console.error('Failed to initialize Qdrant:', error);
+      console.error('❌ Failed to initialize Qdrant:', error);
       throw error;
     }
   }
@@ -619,20 +642,29 @@ export class QdrantVectorStorage implements IVectorStorage {
 
     const options: RequestInit = {
       method,
-      headers
+      headers,
+      // Add timeout to prevent hanging
+      signal: AbortSignal.timeout(30000) // 30 second timeout
     };
 
     if (body && method !== 'GET') {
       options.body = JSON.stringify(body);
     }
 
-    const response = await fetch(url, options);
+    try {
+      const response = await fetch(url, options);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Qdrant request failed: ${response.status} ${response.statusText} - ${errorText}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Qdrant request failed: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      return response;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'TimeoutError') {
+        throw new Error(`Qdrant request timed out after 30 seconds: ${method} ${url}`);
+      }
+      throw error;
     }
-
-    return response;
   }
 }
