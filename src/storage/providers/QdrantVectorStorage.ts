@@ -134,13 +134,21 @@ export class QdrantVectorStorage implements IVectorStorage {
       console.log('🔑 Initializing OpenAI client...');
       await this.initializeOpenAI();
       
-      // Initialize local embeddings but don't fail if it doesn't work
-      console.log('🤖 Initializing local embeddings...');
-      try {
-        await this.initializeLocalEmbeddings();
-      } catch (localEmbeddingError) {
-        console.warn('⚠️  Local embeddings initialization failed, will use fallback:', localEmbeddingError);
-        this.localEmbeddingPipeline = null;
+      // Only initialize local embeddings if OpenAI is not available and not explicitly disabled
+      const disableLocalEmbeddings = process.env.DISABLE_LOCAL_EMBEDDINGS === 'true';
+      
+      if (this.openaiClient) {
+        console.log('✅ OpenAI client available, skipping local embeddings initialization');
+      } else if (disableLocalEmbeddings) {
+        console.log('⚠️  Local embeddings disabled via DISABLE_LOCAL_EMBEDDINGS=true');
+      } else {
+        console.log('🤖 Initializing local embeddings...');
+        try {
+          await this.initializeLocalEmbeddings();
+        } catch (localEmbeddingError) {
+          console.warn('⚠️  Local embeddings initialization failed, will use fallback:', localEmbeddingError);
+          this.localEmbeddingPipeline = null;
+        }
       }
 
       // Check if Qdrant is accessible
