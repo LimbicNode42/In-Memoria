@@ -54,6 +54,13 @@ async function main() {
       await runServer();
       break;
 
+    case 'http':
+    case 'http-server':
+      console.log('Starting In Memoria MCP HTTP Server...');
+      const { runHttpServer } = await import('./mcp-server/http-server.js');
+      await runHttpServer();
+      break;
+
     case 'watch':
       const watchPath = args[1] || process.cwd();
       await startWatcher(watchPath);
@@ -347,7 +354,8 @@ In Memoria - Persistent Intelligence Infrastructure for AI Agents
 Usage: in-memoria <command> [options]
 
 Commands:
-  server                    Start the MCP server for AI agent integration
+  server                    Start the MCP server (STDIO transport) for AI agent integration
+  http                      Start the MCP HTTP server (Streamable HTTP transport)
   setup --interactive       Interactive setup wizard (recommended for first time)
   debug [path] [options]    Run diagnostics and troubleshooting
   watch [path]             Start file watcher for real-time intelligence updates
@@ -366,7 +374,8 @@ Debug Options:
 
 Examples:
   in-memoria setup --interactive    # Recommended for first-time setup
-  in-memoria server
+  in-memoria server                # STDIO MCP server (for direct process communication)
+  in-memoria http                  # HTTP MCP server (for MetaMCP and web clients)
   in-memoria debug --verbose       # Full diagnostics with details
   in-memoria debug --validate      # Check data integrity
   in-memoria watch ./src
@@ -376,6 +385,9 @@ Examples:
 
 Environment Variables:
   OPENAI_API_KEY           OpenAI API key for enhanced vector embeddings (optional)
+  MCP_SERVER_PORT          HTTP server port (default: 3000)
+  CORS_ORIGIN              CORS origin for HTTP server (default: *)
+  ALLOWED_HOSTS            Allowed hosts for DNS rebinding protection
   CHROMA_HOST             ChromaDB host (default: http://localhost:8000)
 
 For more information, visit: https://github.com/pi22by7/in-memoria

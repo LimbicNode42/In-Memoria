@@ -244,6 +244,14 @@ export class CodeCartographerMCP {
     await this.initializeComponents();
   }
 
+  /**
+   * Connect an external transport (for HTTP server)
+   */
+  async connectTransport(transport: any): Promise<void> {
+    await this.server.connect(transport);
+    console.error('In Memoria MCP Server connected to external transport');
+  }
+
   async stop(): Promise<void> {
     // Clean up semantic engine resources
     if (this.semanticEngine) {
