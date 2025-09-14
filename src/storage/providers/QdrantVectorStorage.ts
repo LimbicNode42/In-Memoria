@@ -20,7 +20,7 @@ type Pipeline = any;
 
 interface QdrantPoint {
   id: string | number;
-  vector: number[];
+  vector: { [vectorName: string]: number[] } | number[];  // Support both named vectors and single vector for backward compatibility
   payload: {
     content: string;
     metadata: CodeMetadata;
@@ -297,7 +297,7 @@ export class QdrantVectorStorage implements IVectorStorage {
 
     const point: QdrantPoint = {
       id,
-      vector: embedding,
+      vector: { "": embedding },  // Use default vector name (empty string)
       payload: {
         content: code,
         metadata,
@@ -346,7 +346,7 @@ export class QdrantVectorStorage implements IVectorStorage {
 
       points.push({
         id,
-        vector: embedding,
+        vector: { "": embedding },  // Use default vector name (empty string)
         payload: {
           content: code,
           metadata,
@@ -392,7 +392,10 @@ export class QdrantVectorStorage implements IVectorStorage {
     }
 
     const searchRequest = {
-      vector: embedding,
+      vector: {
+        name: "",  // Use default vector name (empty string)
+        vector: embedding
+      },
       limit: options.limit || 10,
       score_threshold: options.threshold || 0.7,
       with_payload: true
@@ -434,7 +437,7 @@ export class QdrantVectorStorage implements IVectorStorage {
 
     const point: QdrantPoint = {
       id,
-      vector,
+      vector: { "": vector },  // Use default vector name (empty string)
       payload: updatedPayload
     };
 
@@ -557,11 +560,15 @@ export class QdrantVectorStorage implements IVectorStorage {
 
     const vectorConfig = {
       size: config?.vectorSize || this.vectorSize,
-      distance: config?.distance || this.distance
+      distance: (config?.distance || this.distance).charAt(0).toUpperCase() + (config?.distance || this.distance).slice(1) // Capitalize first letter
     };
 
+    // Qdrant expects vectors to be an object with named vector configurations
+    // Using empty string "" as the default vector name
     const createRequest = {
-      vectors: vectorConfig
+      vectors: {
+        "": vectorConfig  // Default vector configuration
+      }
     };
 
     await this.makeRequest('PUT', `/collections/${this.collectionName}`, createRequest);
@@ -610,7 +617,7 @@ export class QdrantVectorStorage implements IVectorStorage {
 
     const points: QdrantPoint[] = data.documents.map(doc => ({
       id: doc.id,
-      vector: doc.embedding,
+      vector: { "": doc.embedding },  // Use default vector name (empty string)
       payload: {
         content: doc.content,
         metadata: doc.metadata,
