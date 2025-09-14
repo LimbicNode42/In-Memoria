@@ -8,6 +8,7 @@ import { CodeCartographerMCP } from './server.js';
 
 export interface HttpServerConfig {
   port: number;
+  host?: string;
   cors?: {
     origin: string | string[];
     credentials?: boolean;
@@ -190,13 +191,14 @@ export class McpHttpServer {
 
   public async start(): Promise<void> {
     return new Promise((resolve, reject) => {
-      const server = this.app.listen(this.config.port, (error?: Error) => {
+      const host = this.config.host || 'localhost';
+      const server = this.app.listen(this.config.port, host, (error?: Error) => {
         if (error) {
           reject(error);
         } else {
-          console.log(`🌐 In-Memoria MCP HTTP Server listening on port ${this.config.port}`);
-          console.log(`📡 MCP endpoint: http://localhost:${this.config.port}/mcp`);
-          console.log(`💚 Health check: http://localhost:${this.config.port}/health`);
+          console.log(`🌐 In-Memoria MCP HTTP Server listening on ${host}:${this.config.port}`);
+          console.log(`📡 MCP endpoint: http://${host}:${this.config.port}/mcp`);
+          console.log(`💚 Health check: http://${host}:${this.config.port}/health`);
           resolve();
         }
       });
@@ -228,10 +230,12 @@ export class McpHttpServer {
 // Export function for CLI usage
 export async function runHttpServer(): Promise<void> {
   const port = parseInt(process.env.MCP_SERVER_PORT || '3000');
+  const host = process.env.HOST || 'localhost';
   const corsOrigin = process.env.CORS_ORIGIN || '*';
   
   const config: HttpServerConfig = {
     port,
+    host,
     cors: {
       origin: corsOrigin,
       credentials: false
