@@ -245,6 +245,12 @@ export async function runHttpServer(): Promise<void> {
     allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || []
   };
 
+  console.log('🔧 HTTP Server Configuration:');
+  console.log(`   NODE_ENV: ${process.env.NODE_ENV}`);
+  console.log(`   DNS Rebinding Protection: ${config.enableDnsRebindingProtection}`);
+  console.log(`   Allowed Hosts: ${JSON.stringify(config.allowedHosts)}`);
+  console.log(`   CORS Origin: ${corsOrigin}`);
+
   const httpServer = new McpHttpServer(config);
   await httpServer.start();
 }
