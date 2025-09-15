@@ -136,6 +136,12 @@ export class McpHttpServer {
         allowedOrigins: this.config.allowedOrigins,
       });
 
+      console.log('🔍 MCP Transport Configuration:');
+      console.log(`   Request Host header: ${req.headers.host}`);
+      console.log(`   DNS Rebinding Protection: ${this.config.enableDnsRebindingProtection}`);
+      console.log(`   Allowed Hosts: ${JSON.stringify(this.config.allowedHosts)}`);
+      console.log(`   Allowed Origins: ${JSON.stringify(this.config.allowedOrigins)}`);
+
       // Clean up transport and server when closed
       transport.onclose = () => {
         console.log(`🔌 MCP session closed: ${transport.sessionId}`);
@@ -232,6 +238,11 @@ export async function runHttpServer(): Promise<void> {
   const port = parseInt(process.env.MCP_SERVER_PORT || '3000');
   const host = process.env.HOST || 'localhost';
   const corsOrigin = process.env.CORS_ORIGIN || '*';
+  const allowedHosts = process.env.ALLOWED_HOSTS?.split(',') || ['127.0.0.1', 'localhost'];
+  
+  // If ALLOWED_HOSTS contains *, disable DNS rebinding protection entirely
+  const hasWildcard = allowedHosts.includes('*');
+  const enableDnsRebindingProtection = !hasWildcard && process.env.NODE_ENV === 'production';
   
   const config: HttpServerConfig = {
     port,
@@ -240,13 +251,14 @@ export async function runHttpServer(): Promise<void> {
       origin: corsOrigin,
       credentials: false
     },
-    enableDnsRebindingProtection: process.env.NODE_ENV === 'production',
-    allowedHosts: process.env.ALLOWED_HOSTS?.split(',') || ['127.0.0.1', 'localhost'],
+    enableDnsRebindingProtection,
+    allowedHosts,
     allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || []
   };
 
   console.log('🔧 HTTP Server Configuration:');
   console.log(`   NODE_ENV: ${process.env.NODE_ENV}`);
+  console.log(`   Has wildcard in ALLOWED_HOSTS: ${hasWildcard}`);
   console.log(`   DNS Rebinding Protection: ${config.enableDnsRebindingProtection}`);
   console.log(`   Allowed Hosts: ${JSON.stringify(config.allowedHosts)}`);
   console.log(`   CORS Origin: ${corsOrigin}`);
